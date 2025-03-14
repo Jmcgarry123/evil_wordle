@@ -2,7 +2,7 @@
 Student information for this assignment:
 
 Replace <FULL NAME> with your name.
-On my/our honor, Jack McGarry and Labeeb Kibria, this
+On my/our honor, <FULL NAME> and <FULL NAME>, this
 programming assignment is my own work and I have not provided this code to
 any other student.
 
@@ -53,7 +53,6 @@ class Keyboard:
     after every guess. The colors of the keyboard letters are updated per guess
     to reflect which guessed letters are correctly placed, incorrectly placed,
     or not present in the secret word.
-
     Instance Variables:
         rows: A tuple of strings, each strings representing a row of letters on the keyboard.
         colors: A dictionary mapping each letter to its current feedback color.
@@ -86,18 +85,6 @@ class Keyboard:
 
         post: None
         """
-        #Building this felt logical to do early on using prior wordle knowledge -- can change var names later
-        for pos, letter in enumerate(guessed_word):
-            feedback = feedback_colors[pos]
-            color_current = self.colors[letter]
-            if feedback == CORRECT_COLOR:
-                self.colors[letter] = CORRECT_COLOR
-            elif feedback == WRONG_SPOT_COLOR:
-                if color_current != CORRECT_COLOR:
-                    self.colors[letter] = WRONG_SPOT_COLOR
-            elif feedback == NOT_IN_WORD_COLOR:
-                if color_current not in CORRECT_COLOR or color_current not in WRONG_SPOT_COLOR:
-                    self.colors[letter] = NOT_IN_WORD_COLOR
 
     # TODO: Modify this method. You may delete this comment when you are done.
     def __str__(self):
@@ -121,54 +108,16 @@ class Keyboard:
         post: Returns a formatted string with each letter colored according to feedback
               and arranged to match a typical keyboard layout.
         """
-        #Building this felt logical to do early on using prior wordle knowledge
-        colored_in = ""
-        spacing = [0,1,3]
-        for row_num, row in enumerate(self.rows):
-            line = " " * spacing[row_num]
-            for i, letter in enumerate(row):
-                if letter.isalpha():
-                    color = self.colors[letter]
-                    color_let = color_word(color, letter)
-                    line += color_let
-                if i < len(row) - 1:
-                    line += " "
-            if row_num < len(self.rows) - 1:
-                colored_in += line + "\n"
-            else:
-                colored_in += line
-        return colored_in
+        return ""
 
 
 class WordFamily:
-    """
-    A class representing a group or 'family' of words that match a specific
-    pattern of feedback_colors. Each word family has a difficulty level determined
-    by the total feedback_color difficulty and the number of words in the family.
-
-    Class Variables:
-        COLOR_DIFFICULTY: A dictionary mapping color codes to numeric difficulty levels.
-
-    Instance Variables:
-        feedback_colors: A tuple representing feedback colors for a guessed word
-        words: A list of words that match the feedback pattern.
-        difficulty: An integer representing the cumulative difficulty of this word family.
-    """
 
     COLOR_DIFFICULTY = {CORRECT_COLOR: 0, WRONG_SPOT_COLOR: 1, NOT_IN_WORD_COLOR: 2}
 
     # TODO: Modify this method. You may delete this comment when you are done.
     def __init__(self, feedback_colors, words):
-        """
-        Initializes the WordFamily based on the feedback colors list. The
-        difficulty of the family is calculated based on the color difficulty of
-        each character in the feedback colors.
-
-        pre:
-            feedback_colors: A tuple representing feedback colors for a guessed word
-            words: A list of words that match the feedback pattern
-        post: None
-        """
+        
         self.feedback_colors = feedback_colors
         self.words = words
         self.difficulty = 0
@@ -176,18 +125,20 @@ class WordFamily:
 
     # TODO: Modify this method. You may delete this comment when you are done.
     def __lt__(self, other):
-        """
-        Compares this WordFamily object with another by prioritizing a larger
-        number of words, higher difficulty, and lexicographical order of the feedback_color.
-        Raises an error if other is not a WordFamily object.
+        
+        if not isinstance(other, WordFamily):
+            raise NotImplementedError("< operator only valid for WordFamily comparisons")
 
-        pre: `other` is a WordFamily object.
-        post:
-            True if this instance is 'less than' the other, False otherwise.
-            raises NotImplementedError with the message: "< operator only valid
-            for WordFamily comparisons." if `other` is not a WordFamily instance.
-        """
-        return False
+        # Step 1: Compare by size (largest family comes first, so reverse order)
+        if len(self.words) != len(other.words):
+            return len(self.words) < len(other.words)  # Largest family first
+    
+        # Step 2: Tie-break by difficulty score (higher score comes first)
+        if self.difficulty_score != other.difficulty_score:
+            return self.difficulty_score > other.difficulty_score
+    
+        # Step 3: Final tie-break by pattern (smallest lexicographical order wins)
+        return self.feedback_colors > other.feedback_colors
 
     # DO NOT change this method.
     # You should use this for debugging!
@@ -319,17 +270,32 @@ def prepare_game():
 
 # TODO: Modify this function. You may delete this comment when you are done.
 def fast_sort(lst):
-    """
-    Returns a new list with the same elements as lst sorted in ascending order. You MUST implement
-    either merge sort or quick sort. You may not use selection sort, insertion sort, or any other
-    sorting method such as the built-in sort() and sorted(). Your sorting function must be able to
-    sort lists of WordFamily, integers, floats, and strings. See the test cases for an example.
-
-    pre: Lst: A list of words
-    post: Returns a new list that is sorted based on the items in lst.
-
-    """
-    return lst[:]
+    # Merge sort Implementation
+    if len(lst) <= 1:
+        return lst
+    
+    # Step 3: Split list into two halves
+    mid = len(lst) // 2
+    left = fast_sort(lst[:mid])
+    right = fast_sort(lst[mid:])
+    
+    # Step 5: Merge two sorted halves
+    sorted_list = []
+    i = j = 0
+    
+    while i < len(left) and j < len(right):
+        if left[i] < right[j]:
+            sorted_list.append(left[i])
+            i += 1
+        else:
+            sorted_list.append(right[j])
+            j += 1
+    
+    # Add remaining elements
+    sorted_list.extend(left[i:])
+    sorted_list.extend(right[j:])
+    
+    return sorted_list
 
 
 # TODO: Modify this helper function. You may delete this comment when you are done.
@@ -349,18 +315,23 @@ def get_feedback_colors(secret_word, guessed_word):
           - Letters not in secret_word are marked with NOT_IN_WORD_COLOR. The list will be of
             length 5 with the ANSI coloring in each index as the returned value.
     """
-    feedback = [None] * NUM_LETTERS
-    correct_letters = []
-    secret_word_letters = list(secret_word)
-    for pos, char in enumerate(guessed_word):
-        if guessed_word[pos] == secret_word[pos]:
-            feedback[pos] == CORRECT_COLOR
-    # Modify this! This is just starter code.
-    for i in range(NUM_LETTERS):
-        feedback[i] = WRONG_SPOT_COLOR
+    feedback = [NOT_IN_WORD_COLOR] * 5
+    secret_count = {}
+    
+    # First pass: Mark CORRECT_COLOR and build frequency count for remaining letters
+    for i in range(5):
+        if guessed_word[i] == secret_word[i]:
+            feedback[i] = CORRECT_COLOR
+        else:
+            secret_count[secret_word[i]] = secret_count.get(secret_word[i], 0) + 1
+    
+    # Second pass: Mark WRONG_SPOT_COLOR where applicable
+    for i in range(5):
+        if feedback[i] == NOT_IN_WORD_COLOR and guessed_word[i] in secret_count and secret_count[guessed_word[i]] > 0:
+            feedback[i] = WRONG_SPOT_COLOR
+            secret_count[guessed_word[i]] -= 1
 
-    # You do not have to change this return statement
-    return feedback
+    return tuple(feedback)
 
 
 # TODO: Modify this function. You may delete this comment when you are done.
@@ -384,9 +355,26 @@ def get_feedback(remaining_secret_words, guessed_word):
             3. Lexicographical ordering of the feedback (ASCII value comparisons)
     """
     # Modify this! This is just starter code.
-    feedback_colors = get_feedback_colors(remaining_secret_words[0], guessed_word)
-
-    return feedback_colors, remaining_secret_words
+    from collections import defaultdict
+    
+    # Step 1: Group words into families based on feedback patterns
+    word_families = defaultdict(list)
+    
+    for word in remaining_secret_words:
+        pattern = get_feedback_colors(word, guessed_word)
+        word_families[pattern].append(word)
+    
+    # Step 2: Create WordFamily objects
+    families = []
+    for pattern, words in word_families.items():
+        families.append(WordFamily(pattern, words))
+    
+    # Step 3: Sort word families to find the hardest one
+    sorted_families = fast_sort(families)
+    hardest_family = sorted_families[0]
+    
+    # Step 4: Return hardest family's pattern and word list
+    return hardest_family.feedback_colors, hardest_family.words
 
 
 # DO NOT modify this function.
