@@ -2,7 +2,7 @@
 Student information for this assignment:
 
 Replace <FULL NAME> with your name.
-On my/our honor, <FULL NAME> and <FULL NAME>, this
+On my/our honor, Jack McGarry and Labeeb Kibria, this
 programming assignment is my own work and I have not provided this code to
 any other student.
 
@@ -86,6 +86,18 @@ class Keyboard:
 
         post: None
         """
+        #Building this felt logical to do early on using prior wordle knowledge -- can change var names later
+        for pos, letter in enumerate(guessed_word):
+            feedback = feedback_colors[pos]
+            color_current = self.colors[letter]
+            if feedback == CORRECT_COLOR:
+                self.colors[letter] = CORRECT_COLOR
+            elif feedback == WRONG_SPOT_COLOR:
+                if color_current != CORRECT_COLOR:
+                    self.colors[letter] = WRONG_SPOT_COLOR
+            elif feedback == NOT_IN_WORD_COLOR:
+                if color_current not in CORRECT_COLOR or color_current not in WRONG_SPOT_COLOR:
+                    self.colors[letter] = NOT_IN_WORD_COLOR
 
     # TODO: Modify this method. You may delete this comment when you are done.
     def __str__(self):
@@ -109,7 +121,23 @@ class Keyboard:
         post: Returns a formatted string with each letter colored according to feedback
               and arranged to match a typical keyboard layout.
         """
-        return ""
+        #Building this felt logical to do early on using prior wordle knowledge
+        colored_in = ""
+        spacing = [0,1,3]
+        for row_num, row in enumerate(self.rows):
+            line = " " * spacing[row_num]
+            for i, letter in enumerate(row):
+                if letter.isalpha():
+                    color = self.colors[letter]
+                    color_let = color_word(color, letter)
+                    line += color_let
+                if i < len(row) - 1:
+                    line += " "
+            if row_num < len(self.rows) - 1:
+                colored_in += line + "\n"
+            else:
+                colored_in += line
+        return colored_in
 
 
 class WordFamily:
@@ -322,7 +350,11 @@ def get_feedback_colors(secret_word, guessed_word):
             length 5 with the ANSI coloring in each index as the returned value.
     """
     feedback = [None] * NUM_LETTERS
-
+    correct_letters = []
+    secret_word_letters = list(secret_word)
+    for pos, char in enumerate(guessed_word):
+        if guessed_word[pos] == secret_word[pos]:
+            feedback[pos] == CORRECT_COLOR
     # Modify this! This is just starter code.
     for i in range(NUM_LETTERS):
         feedback[i] = WRONG_SPOT_COLOR
